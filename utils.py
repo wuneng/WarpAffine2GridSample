@@ -31,7 +31,23 @@ def get_N_inv(W, H):
 
 
 def cvt_MToTheta(M, w, h):
-    """M is shaped (2, 3) and np.ndarray"""
+    """convert affine warp matrix `M` compatible with `opencv.warpAffine` to `theta` matrix
+    compatible with `torch.F.affine_grid`
+
+    Parameters
+    ----------
+    M : np.ndarray
+        affine warp matrix shaped [2, 3]
+    w : int
+        width of image
+    h : int
+        height of image
+
+    Returns
+    -------
+    np.ndarray
+        theta tensor for `torch.F.affine_grid`, shaped [2, 3]
+    """
     M_aug = np.concatenate([M, np.zeros((1, 3))], axis=0)
     M_aug[-1, -1] = 1.0
     N = get_N(w, h)
@@ -42,7 +58,23 @@ def cvt_MToTheta(M, w, h):
 
 
 def cvt_ThetaToM(theta, w, h):
-    """theta is shaped (2, 3) and np.ndarray"""
+    """convert theta matrix compatible with `torch.F.affine_grid` to affine warp matrix `M`
+    compatible with `opencv.warpAffine`.
+
+    Parameters
+    ----------
+    theta : np.ndarray
+        theta tensor for `torch.F.affine_grid`, shaped [2, 3]
+    w : int
+        width of image
+    h : int
+        height of image
+
+    Returns
+    -------
+    np.ndarray
+        theta tensor for `torch.F.affine_grid`, shaped [2, 3]
+    """
     theta_aug = np.concatenate([theta, np.zeros((1, 3))], axis=0)
     theta_aug[-1, -1] = 1.0
     N = get_N(w, h)
