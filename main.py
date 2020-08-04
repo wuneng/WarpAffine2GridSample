@@ -57,3 +57,19 @@ tensor_img = F.grid_sample(tensor_img, grid)
 tensor_img = tensor_img.squeeze(0)
 warp_img = convert_image_np(tensor_img)
 show_image(warp_img, dst, 5)
+
+
+"""6. Draw cropped bounding box"""
+M3 = np.concatenate([M, np.zeros((1, 3))], axis=0).astype(np.float32)
+M3[-1, -1] = 1
+M3 = np.linalg.inv(M3)
+points = np.array([[0, 0], [w, 0], [w, h], [0, h]], dtype=np.float32).reshape(
+    (-1, 1, 2)
+)
+bbox = cv2.perspectiveTransform(points, M3)
+bbox = bbox.reshape((-1, 2))
+polygons = [np.int32(bbox)]
+img_with_box = image.copy()
+img_with_box = cv2.polylines(img_with_box, polygons, True, (0, 255, 255), 30)
+plt.imshow(img_with_box)
+plt.savefig("6.png")

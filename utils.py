@@ -34,6 +34,10 @@ def cvt_MToTheta(M, w, h):
     """convert affine warp matrix `M` compatible with `opencv.warpAffine` to `theta` matrix
     compatible with `torch.F.affine_grid`
 
+    Note:
+    M works with `opencv.warpAffine`.
+    To transform a set of bounding box corner points using `opencv.perspectiveTransform`, M^-1 is required
+
     Parameters
     ----------
     M : np.ndarray
@@ -57,9 +61,13 @@ def cvt_MToTheta(M, w, h):
     return theta[:2, :]
 
 
-def cvt_ThetaToM(theta, w, h):
+def cvt_ThetaToM(theta, w, h, return_inv=False):
     """convert theta matrix compatible with `torch.F.affine_grid` to affine warp matrix `M`
     compatible with `opencv.warpAffine`.
+
+    Note:
+    M works with `opencv.warpAffine`.
+    To transform a set of bounding box corner points using `opencv.perspectiveTransform`, M^-1 is required
 
     Parameters
     ----------
@@ -69,11 +77,13 @@ def cvt_ThetaToM(theta, w, h):
         width of image
     h : int
         height of image
+    return_inv : False
+        return M^-1 instead of M.
 
     Returns
     -------
     np.ndarray
-        theta tensor for `torch.F.affine_grid`, shaped [2, 3]
+        affine warp matrix `M` shaped [2, 3]
     """
     theta_aug = np.concatenate([theta, np.zeros((1, 3))], axis=0)
     theta_aug[-1, -1] = 1.0
@@ -81,6 +91,9 @@ def cvt_ThetaToM(theta, w, h):
     N_inv = get_N_inv(w, h)
     M = np.linalg.inv(theta_aug)
     M = N_inv @ M @ N
+    if return_inv:
+        M_inv = np.linalg.inv(M)
+        return M_inv[:2, :]
     return M[:2, :]
 
 
