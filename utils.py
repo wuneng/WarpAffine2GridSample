@@ -10,7 +10,7 @@ def convert_image_np(inp):
     inp = (inp * 255).astype(np.uint8)
     return inp
 
-def 
+
 
 
 def get_transform(center, scale, output_size, rot=0):
@@ -59,13 +59,13 @@ def kps2box(keypoints):
     return np.array([x, y, h, w], dtype=np.float32)
 
 
-def show_image(image, landmarks:
+def show_image(image, keypoints):
     fig = plt.figure(figsize=plt.figaspect(0.5))
     ax = fig.add_subplot(1, 1, 1)
     ax.imshow(image)
     ax.plot(
-        landmarks[0:17, 0],
-        landmarks[0:17, 1],
+        keypoints[0:17, 0],
+        keypoints[0:17, 1],
         marker="o",
         markersize=4,
         linestyle="-",
@@ -73,8 +73,8 @@ def show_image(image, landmarks:
         lw=2,
     )
     ax.plot(
-        landmarks[17:22, 0],
-        landmarks[17:22, 1],
+        keypoints[17:22, 0],
+        keypoints[17:22, 1],
         marker="o",
         markersize=4,
         linestyle="-",
@@ -82,8 +82,8 @@ def show_image(image, landmarks:
         lw=2,
     )
     ax.plot(
-        landmarks[22:27, 0],
-        landmarks[22:27, 1],
+        keypoints[22:27, 0],
+        keypoints[22:27, 1],
         marker="o",
         markersize=4,
         linestyle="-",
@@ -91,8 +91,8 @@ def show_image(image, landmarks:
         lw=2,
     )
     ax.plot(
-        landmarks[27:31, 0],
-        landmarks[27:31, 1],
+        keypoints[27:31, 0],
+        keypoints[27:31, 1],
         marker="o",
         markersize=4,
         linestyle="-",
@@ -100,8 +100,8 @@ def show_image(image, landmarks:
         lw=2,
     )
     ax.plot(
-        landmarks[31:36, 0],
-        landmarks[31:36, 1],
+        keypoints[31:36, 0],
+        keypoints[31:36, 1],
         marker="o",
         markersize=4,
         linestyle="-",
@@ -109,8 +109,8 @@ def show_image(image, landmarks:
         lw=2,
     )
     ax.plot(
-        landmarks[36:42, 0],
-        landmarks[36:42, 1],
+        keypoints[36:42, 0],
+        keypoints[36:42, 1],
         marker="o",
         markersize=4,
         linestyle="-",
@@ -118,8 +118,8 @@ def show_image(image, landmarks:
         lw=2,
     )
     ax.plot(
-        landmarks[42:48, 0],
-        landmarks[42:48, 1],
+        keypoints[42:48, 0],
+        keypoints[42:48, 1],
         marker="o",
         markersize=4,
         linestyle="-",
@@ -127,8 +127,8 @@ def show_image(image, landmarks:
         lw=2,
     )
     ax.plot(
-        landmarks[48:60, 0],
-        landmarks[48:60, 1],
+        keypoints[48:60, 0],
+        keypoints[48:60, 1],
         marker="o",
         markersize=4,
         linestyle="-",
@@ -136,8 +136,8 @@ def show_image(image, landmarks:
         lw=2,
     )
     ax.plot(
-        landmarks[60:68, 0],
-        landmarks[60:68, 1],
+        keypoints[60:68, 0],
+        keypoints[60:68, 1],
         marker="o",
         markersize=4,
         linestyle="-",
