@@ -1,4 +1,5 @@
 import math
+import torch 
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -9,112 +10,56 @@ def convert_image_np(inp):
     inp = (inp * 255).astype(np.uint8)
     return inp
 
-
-def get_N(W, H):
-    """N that maps from unnormalized to normalized coordinates"""
-    N = np.zeros((3, 3), dtype=np.float64)
-    N[0, 0] = 2.0 / W
-    N[0, 1] = 0
-    N[1, 1] = 2.0 / H
-    N[1, 0] = 0
-    N[0, -1] = -1.0
-    N[1, -1] = -1.0
-    N[-1, -1] = 1.0
-    return N
+def 
 
 
-def get_N_inv(W, H):
-    """N that maps from normalized to unnormalized coordinates"""
-    # TODO: do this analytically maybe?
-    N = get_N(W, H)
-    return np.linalg.inv(N)
-
-
-def cvt_MToTheta(M, w, h):
-    """convert affine warp matrix `M` compatible with `opencv.warpAffine` to `theta` matrix
-    compatible with `torch.F.affine_grid`
-
-    Note:
-    M works with `opencv.warpAffine`.
-    To transform a set of bounding box corner points using `opencv.perspectiveTransform`, M^-1 is required
-
-    Parameters
-    ----------
-    M : np.ndarray
-        affine warp matrix shaped [2, 3]
-    w : int
-        width of image
-    h : int
-        height of image
-
-    Returns
-    -------
-    np.ndarray
-        theta tensor for `torch.F.affine_grid`, shaped [2, 3]
+def get_transform(center, scale, output_size, rot=0):
     """
-    M_aug = np.concatenate([M, np.zeros((1, 3))], axis=0)
-    M_aug[-1, -1] = 1.0
-    N = get_N(w, h)
-    N_inv = get_N_inv(w, h)
-    theta = N @ M_aug @ N_inv
-    theta = np.linalg.inv(theta)
-    return theta[:2, :]
-
-
-def cvt_ThetaToM(theta, w, h, return_inv=False):
-    """convert theta matrix compatible with `torch.F.affine_grid` to affine warp matrix `M`
-    compatible with `opencv.warpAffine`.
-
-    Note:
-    M works with `opencv.warpAffine`.
-    To transform a set of bounding box corner points using `opencv.perspectiveTransform`, M^-1 is required
-
-    Parameters
-    ----------
-    theta : np.ndarray
-        theta tensor for `torch.F.affine_grid`, shaped [2, 3]
-    w : int
-        width of image
-    h : int
-        height of image
-    return_inv : False
-        return M^-1 instead of M.
-
-    Returns
-    -------
-    np.ndarray
-        affine warp matrix `M` shaped [2, 3]
+    General image processing functions
     """
-    theta_aug = np.concatenate([theta, np.zeros((1, 3))], axis=0)
-    theta_aug[-1, -1] = 1.0
-    N = get_N(w, h)
-    N_inv = get_N_inv(w, h)
-    M = np.linalg.inv(theta_aug)
-    M = N_inv @ M @ N
-    if return_inv:
-        M_inv = np.linalg.inv(M)
-        return M_inv[:2, :]
-    return M[:2, :]
+    # Generate transformation matrix
+    h = 200 * scale
+    t = np.zeros((3, 3))
+    t[0, 0] = float(output_size[1]) / h
+    t[1, 1] = float(output_size[0]) / h
+    t[0, 2] = output_size[1] * (-float(center[0]) / h + .5)
+    t[1, 2] = output_size[0] * (-float(center[1]) / h + .5)
+    t[2, 2] = 1
+    if not rot == 0:
+        rot = -rot  # To match direction of rotation from cropping
+        rot_mat = np.zeros((3, 3))
+        rot_rad = rot * np.pi / 180
+        sn, cs = np.sin(rot_rad), np.cos(rot_rad)
+        rot_mat[0, :2] = [cs, -sn]
+        rot_mat[1, :2] = [sn, cs]
+        rot_mat[2, 2] = 1
+        # Need to rotate around center
+        t_mat = np.eye(3)
+        t_mat[0, 2] = -output_size[1] / 2
+        t_mat[1, 2] = -output_size[0] / 2
+        t_inv = t_mat.copy()
+        t_inv[:2, 2] *= -1
+        t = np.dot(t_inv, np.dot(rot_mat, np.dot(t_mat, t)))
+    return t
 
 
-def rotatepoints(landmarks, center, rot):
-    center_coord = np.zeros_like(landmarks)
-    center_coord[:, 0] = center[0]
-    center_coord[:, 1] = center[1]
-
-    angle = math.radians(rot)
-
-    rot_matrix = np.array(
-        [[math.cos(angle), -1 * math.sin(angle)], [math.sin(angle), math.cos(angle)]]
-    )
-
-    rotated_coords = np.dot((landmarks - center_coord), rot_matrix) + center_coord
-
-    return rotated_coords
+def transform_keypoints(kps, meta, invert=False):
+    keypoints = kps.copy()
+    if invert:
+        meta = np.linalg.inv(meta)
+    keypoints[:, :2] = np.dot(keypoints[:, :2], meta[:2, :2].T) + meta[:2, 2]
+    return keypoints
 
 
-def show_image(image, landmarks, i):
-    # print(image.shape)
+def kps2box(keypoints):
+    x = min(keypoints[:, 0])
+    y = min(keypoints[:, 1])
+    w = max(keypoints[:, 0]) - x
+    h = max(keypoints[:, 1]) - y
+    return np.array([x, y, h, w], dtype=np.float32)
+
+
+def show_image(image, landmarks:
     fig = plt.figure(figsize=plt.figaspect(0.5))
     ax = fig.add_subplot(1, 1, 1)
     ax.imshow(image)
@@ -201,4 +146,4 @@ def show_image(image, landmarks, i):
     )
     ax.axis("off")
     plt.show()
-    plt.savefig(f"{i}.png")
+

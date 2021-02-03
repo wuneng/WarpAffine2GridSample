@@ -5,71 +5,22 @@ import random
 import numpy as np
 import cv2
 import skimage.transform as trans
-from utils import (
-    convert_image_np,
-    rotatepoints,
-    show_image,
-    cvt_MToTheta,
-    cvt_ThetaToM,
-)
+
 
 
 """1. Load image and landmarks"""
-image = cv2.imread("1.png")
+image = cv2.imread("data/1.png")
 image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 h, w, c = image.shape
-src = np.genfromtxt("1.pts", skip_header=3, skip_footer=1)
-show_image(image, src, 3)
-
-"""2. augmentation(scale, rotation, translation)"""
-rot = random.randint(-50, 50)
-dst = rotatepoints(src, [w / 2, h / 2], rot)
-left = min(dst[:, 0])
-right = max(dst[:, 0])
-top = min(dst[:, 1])
-bot = max(dst[:, 1])
-dst -= [left, top]
-dst *= [w / (right - left), h / (bot - top)]
-scale = random.uniform(0.8, 1.0)
-dst *= scale
-dx = random.uniform(-0.05, 0.05) * w
-dy = random.uniform(-0.05, 0.05) * h
-dst += [dx, dy]
-
-"""3.Warp image to cv_img using OpenCv"""
-tr = trans.estimate_transform("affine", src=src, dst=dst)
-M = tr.params[0:2, :]
-cv_img = cv2.warpAffine(image, M, (image.shape[1], image.shape[0]))
-show_image(cv_img, dst, 4)
-
-"""4.Affine Transformation Matrix to theta"""
-theta = cvt_MToTheta(M, w, h)
-M2 = cvt_ThetaToM(theta, w, h)
-assert np.allclose(M, M2)
-
-"""5.Warp image to tensor_img using grid_sample"""
-to_tensor = torchvision.transforms.ToTensor()
-tensor_img = to_tensor(image).unsqueeze(0)
-theta = torch.Tensor(theta).unsqueeze(0)
-
-grid = F.affine_grid(theta, tensor_img.size())
-tensor_img = F.grid_sample(tensor_img, grid)
-tensor_img = tensor_img.squeeze(0)
-warp_img = convert_image_np(tensor_img)
-show_image(warp_img, dst, 5)
+src = np.genfromtxt("data/1.pts", skip_header=3, skip_footer=1)
+# show_image(image, src, 3)
 
 
-"""6. Draw cropped bounding box"""
-M3 = np.concatenate([M, np.zeros((1, 3))], axis=0).astype(np.float32)
-M3[-1, -1] = 1
-M3 = np.linalg.inv(M3)
-points = np.array([[0, 0], [w, 0], [w, h], [0, h]], dtype=np.float32).reshape(
-    (-1, 1, 2)
-)
-bbox = cv2.perspectiveTransform(points, M3)
-bbox = bbox.reshape((-1, 2))
-polygons = [np.int32(bbox)]
-img_with_box = image.copy()
-img_with_box = cv2.polylines(img_with_box, polygons, True, (0, 255, 255), 30)
-plt.imshow(img_with_box)
-plt.savefig("6.png")
+
+theta = torch.eye(3).unsqueeze(0)
+
+image = torch.zeros([1,1,5,5])
+
+grid = torch.nn.functional.affine_grid(theta[:,:2], image.size())
+print(grid[...,0])
+print(grid[...,1])
